@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamGrade AI - ระบบตรวจข้อสอบและประเมินผลอัจฉริยะ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'Chakra Petch', monospace;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .active-nav {
+      background-color: #dc2626 !important;
+      color: #ffffff !important;
+    }
+  </style>
+</head>
+<body class="bg-[#f8f9ff] text-slate-800 min-h-screen flex flex-col antialiased selection:bg-red-500 selection:text-white">
+
+  <!-- Top Global Header / Navigation Chrome -->
+  <header class="bg-[#0f172a] text-white border-b border-slate-800 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo and System Info -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('home')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-700 to-red-600 flex items-center justify-center shadow-lg shadow-blue-900/30">
+            <i data-lucide="check-check" class="w-6 h-6 text-white stroke-[2.5]"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-lg tracking-wide text-white">ExamGrade <span class="text-red-500 font-extrabold">AI</span></span>
+              <span class="text-[10px] uppercase font-mono-code bg-blue-950/80 text-blue-300 border border-blue-800 px-1.5 py-0.5 rounded">v4.2 PRO</span>
+            </div>
+            <p class="text-[11px] text-slate-400">ระบบบริหารจัดการเฉลยและตรวจข้อสอบอัจฉริยะ</p>
+          </div>
+        </div>
+
+        <!-- Active Exam Key Pill Indicator -->
+        <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-700/80 rounded-full px-3.5 py-1.5 space-x-2.5 shadow-inner">
+          <span class="flex h-2.5 w-2.5 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <div class="text-xs font-medium">
+            <span class="text-slate-400">ชุดเฉลยพร้อมใช้งาน:</span>
+            <span id="nav-active-key-name" class="text-emerald-400 font-semibold ml-1">คณิตศาสตร์พื้นฐาน ม.4</span>
+            <span id="nav-active-key-count" class="text-slate-300 font-mono-code bg-slate-800 px-1.5 py-0.5 rounded ml-1.5 text-[11px]">30 ข้อ</span>
+          </div>
+        </div>
+
+        <!-- Main Navigation Links -->
+        <nav class="flex items-center space-x-1 sm:space-x-2">
+          <button onclick="navigateTo('home')" id="nav-home" class="nav-btn px-3 py-1.5 rounded-lg text-sm font-medium transition active-nav">
+            หน้าหลัก
+          </button>
+          <button onclick="navigateTo('keys')" id="nav-keys" class="nav-btn px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+            สร้างเฉลย (Keys)
+          </button>
+          <button onclick="navigateTo('grade')" id="nav-grade" class="nav-btn px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+            ตรวจข้อสอบ (Grader)
+          </button>
+          <button onclick="navigateTo('history')" id="nav-history" class="nav-btn px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+            ประวัติการตรวจ
+          </button>
+
+          <!-- User Profile / Quota Indicator -->
+          <div class="pl-2 border-l border-slate-700 flex items-center space-x-2">
+            <div class="hidden sm:flex flex-col text-right">
+              <span class="text-[11px] text-slate-400">โควตาประมวลผล</span>
+              <span class="text-xs font-mono-code text-blue-400 font-semibold">1,450/2,000</span>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white border border-slate-600">
+              ครู
+            </div>
+          </div>
+        </nav>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Secondary Subbar: Breadcrumbs, Status, Fast Actions -->
+  <div class="bg-white border-b border-slate-200/80 shadow-sm py-2 px-4 sm:px-6 lg:px-8 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center space-x-2">
+      <button onclick="navigateBack()" class="flex items-center space-x-1 text-slate-500 hover:text-red-600 transition font-medium">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>ย้อนกลับ</span>
+      </button>
+      <span class="text-slate-300">/</span>
+      <span class="text-slate-400">ข้อสอบกลางภาค 1/2567</span>
+      <span class="text-slate-300">/</span>
+      <span id="current-subbar-title" class="font-medium text-slate-800">หน้าหลักระบบ ExamGrade AI</span>
+    </div>
+    
+    <div class="flex items-center space-x-4">
+      <span class="hidden md:inline-flex items-center text-emerald-600 font-medium">
+        <i data-lucide="cpu" class="w-3.5 h-3.5 mr-1"></i>
+        AI Model: Optical OMR Engine Ready
+      </span>
+      <span class="text-slate-400">|</span>
+      <span class="text-slate-500" id="clock-display">อัปเดตล่าสุด: กำลังโหลด...</span>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ================= PAGE 1: HOME (DASHBOARD) ================= -->
+    <section id="view-home" class="space-y-8 block">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e3a8a] via-[#172554] to-[#0f172a] text-white p-6 sm:p-8 lg:p-10 shadow-xl">
+        <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-transparent pointer-events-none"></div>
+        <div class="relative z-10 max-w-3xl">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-4">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-300"></i>
+            <span>Precision AI Scoring Platform v4.2</span>
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            ระบบตรวจข้อสอบและจัดการเฉลยอัจฉริยะ
+          </h1>
+          <p class="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
+            ยกระดับความแม่นยำในการวัดผลการศึกษา ออกแบบชุดเฉลยมาตรฐาน 1–100 ข้อ รองรับช้อยส์ A–F 
+            พร้อมระบบตรวจนับคะแนนเทียบรายข้ออัตโนมัติ ตัดเกรดและบันทึกสถิติในเสี้ยววินาที
+          </p>
+
+          <div class="mt-6 flex flex-wrap gap-4 pt-2">
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-2.5">
+              <span class="block text-xs text-slate-300">ข้อสอบที่ตรวจแล้ว</span>
+              <span class="text-xl sm:text-2xl font-bold font-mono-code text-white" id="home-stat-total">1,420 ชุด</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-2.5">
+              <span class="block text-xs text-slate-300">ชุดเฉลยในระบบ</span>
+              <span class="text-xl sm:text-2xl font-bold font-mono-code text-white" id="home-stat-keys">18 ชุดวิชา</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-2.5">
+              <span class="block text-xs text-slate-300">ความแม่นยำ AI OMR</span>
+              <span class="text-xl sm:text-2xl font-bold font-mono-code text-emerald-400">100% Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards (The 2 Core User Flows) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Action 1: Create Answer Keys -->
+        <div class="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-sm hover:shadow-md transition group flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-0 pointer-events-none group-hover:scale-110 transition"></div>
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-100 text-[#1e3a8a] flex items-center justify-center shadow-sm">
+                <i data-lucide="key-round" class="w-6 h-6 stroke-[2.2]"></i>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-mono-code">MODULE 01</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 group-hover:text-blue-900 transition">
+              สร้าง/จัดการชุดเฉลย (Answer Keys)
+            </h3>
+            <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+              กำหนดจำนวนข้อสอบ 1–100 ข้อ พร้อมตัวเลือกคำตอบ 6 ช้อยส์ (A, B, C, D, E, F) 
+              ตั้งชื่อชุดวิชา ปรับเกณฑ์คะแนน และบันทึกเป็นชุดเฉลยมาตรฐาน
+            </p>
+
+            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mr-2"></i>รองรับจำนวนข้อ 1 ถึง 100 ข้อ พร้อมสไลเดอร์</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mr-2"></i>เลือกช้อยส์ตอบ A - F ทุกข้อ</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mr-2"></i>มีปุ่มสุ่มตัวอย่างเฉลยและล้างค่าฉับไว</li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">ชุดเฉลยพร้อมตรวจ 1 ชุด</span>
+            <button onclick="navigateTo('keys')" class="inline-flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#172554] text-white px-5 py-2.5 rounded-xl font-medium text-sm transition shadow shadow-blue-900/20 active:scale-95">
+              <span>เข้าสู่หน้าสร้างเฉลย</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action 2: Grade Exam -->
+        <div class="bg-white rounded-2xl p-6 sm:p-7 border border-red-200/80 shadow-sm hover:shadow-md transition group flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-red-50/30">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-red-100/70 rounded-bl-full -z-0 pointer-events-none group-hover:scale-110 transition"></div>
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm">
+                <i data-lucide="sparkles" class="w-6 h-6 stroke-[2.2]"></i>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded bg-red-100 text-red-700 font-mono-code">MODULE 02</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 group-hover:text-red-700 transition">
+              เริ่มตรวจข้อสอบ (Grading Exam)
+            </h3>
+            <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+              ดึงข้อมูลจำนวนข้อและคำตอบจากชุดเฉลยโดยตรง ป้อนคำตอบกระดาษคำตอบของนักเรียน 
+              แล้วกดปุ่มตรวจเพื่อให้ AI ประมวลผลและตัดเกรดทันที
+            </p>
+
+            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-red-600 mr-2"></i>ตรวจเทียบข้อต่อข้อ ถูกได้ 1 คะแนน / ผิดได้ 0 คะแนน</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-red-600 mr-2"></i>สรุปคะแนนอัตโนมัติ (คะแนนที่ได้ / คะแนนเต็ม)</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-red-600 mr-2"></i>บันทึกประวัติการตรวจลงฐานข้อมูลทันที</li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-red-100 flex items-center justify-between">
+            <span class="text-xs text-emerald-600 font-medium flex items-center">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+              โหมดพร้อมตรวจคำตอบ
+            </span>
+            <button onclick="navigateTo('grade')" class="inline-flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition shadow-lg shadow-red-600/25 active:scale-95">
+              <span>เริ่มตรวจข้อสอบเดี๋ยวนี้</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Live Active Key & Recent Graded Preview -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Active Key Info Card -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center">
+                <i data-lucide="bookmark-check" class="w-4 h-4 text-blue-600 mr-1.5"></i>
+                ชุดเฉลยหลักที่ใช้งาน
+              </span>
+              <span class="text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">พร้อมตรวจ</span>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base" id="home-card-keyname">คณิตศาสตร์พื้นฐาน (ม. 4)</h4>
+            <p class="text-xs text-slate-500 mt-0.5 font-mono-code">รหัสวิชา: MA31101 • ภาคเรียนที่ 1/2567</p>
+
+            <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-slate-500 block text-[11px]">จำนวนข้อสอบ</span>
+                <span class="font-bold text-slate-800 text-sm font-mono-code" id="home-card-keycount">30 ข้อ</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-slate-500 block text-[11px]">ช้อยส์คำตอบ</span>
+                <span class="font-bold text-slate-800 text-sm font-mono-code">A, B, C, D, E, F</span>
+              </div>
+            </div>
+
+            <div class="mt-4 bg-blue-50/60 rounded-xl p-3 border border-blue-100 text-xs">
+              <span class="font-semibold text-blue-900 block mb-1">ตัวอย่างเฉลย 5 ข้อแรก:</span>
+              <div class="flex space-x-2 text-[11px] font-mono-code font-bold text-blue-800" id="home-sample-keys">
+                <span class="bg-white px-2 py-0.5 rounded border border-blue-200">1: A</span>
+                <span class="bg-white px-2 py-0.5 rounded border border-blue-200">2: C</span>
+                <span class="bg-white px-2 py-0.5 rounded border border-blue-200">3: B</span>
+                <span class="bg-white px-2 py-0.5 rounded border border-blue-200">4: D</span>
+                <span class="bg-white px-2 py-0.5 rounded border border-blue-200">5: A</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+            <button onclick="navigateTo('keys')" class="text-blue-600 hover:text-blue-800 font-medium">แก้ไขเฉลยชุดนี้ &rarr;</button>
+            <button onclick="navigateTo('grade')" class="text-red-600 hover:text-red-800 font-bold">ใช้ตรวจทันที &rarr;</button>
+          </div>
+        </div>
+
+        <!-- Recent Records Table Preview -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center">
+                <i data-lucide="history" class="w-4 h-4 text-red-600 mr-1.5"></i>
+                ประวัติการตรวจล่าสุด (Recent Graded)
+              </span>
+              <button onclick="navigateTo('history')" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                ดูทั้งหมด &rarr;
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-400 font-semibold border-b border-slate-100">
+                    <th class="pb-2">รหัส / ชื่อผู้สอบ</th>
+                    <th class="pb-2">ชุดวิชา</th>
+                    <th class="pb-2 text-center">คะแนนที่ได้</th>
+                    <th class="pb-2 text-center">ร้อยละ</th>
+                    <th class="pb-2 text-center">เกรด</th>
+                    <th class="pb-2 text-right">เวลา</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100" id="home-history-tbody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>แสดง 3 รายการล่าสุด จากทั้งหมดในระบบ</span>
+            <button onclick="navigateTo('history')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-medium">
+              เปิดหน้าประวัติฉบับเต็ม
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- How it works 3-step guide -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm">
+        <h4 class="font-bold text-slate-800 text-sm sm:text-base mb-4 flex items-center">
+          <i data-lucide="layers" class="w-4 h-4 text-blue-600 mr-2"></i>
+          ขั้นตอนการใช้งานระบบ 3 ขั้นตอนง่ายๆ
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 relative">
+            <span class="w-6 h-6 rounded-full bg-blue-600 text-white font-bold inline-flex items-center justify-center text-[11px] mb-2 font-mono-code">1</span>
+            <h5 class="font-bold text-slate-800 text-sm">สร้างชุดเฉลยมาตรฐาน</h5>
+            <p class="text-slate-500 mt-1">กำหนดจำนวนข้อที่ต้องการตรวจ 1–100 ข้อ พร้อมเลือกคำตอบเฉลย A ถึง F ในแต่ละข้อ</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 relative">
+            <span class="w-6 h-6 rounded-full bg-blue-600 text-white font-bold inline-flex items-center justify-center text-[11px] mb-2 font-mono-code">2</span>
+            <h5 class="font-bold text-slate-800 text-sm">ป้อนกระดาษคำตอบ</h5>
+            <p class="text-slate-500 mt-1">ระบุรหัสนักเรียน และคลิกเลือกคำตอบที่นักเรียนฝนลงในกระดาษคำตอบ (มีปุ่มลัดสุ่มทดสอบ)</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 relative">
+            <span class="w-6 h-6 rounded-full bg-red-600 text-white font-bold inline-flex items-center justify-center text-[11px] mb-2 font-mono-code">3</span>
+            <h5 class="font-bold text-slate-800 text-sm">กดตรวจ AI และดูผล</h5>
+            <p class="text-slate-500 mt-1">กดปุ่มตรวจข้อสอบด้านล่างสุด ระบบตรวจนับคะแนนเทียบเฉลย ตัดเกรด และบันทึกประวัติทันที</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= PAGE 2: ANSWER KEYS SETUP ================= -->
+    <section id="view-keys" class="space-y-6 hidden">
+      
+      <!-- Top Actions Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+        <div>
+          <div class="flex items-center space-x-2">
+            <button onclick="navigateTo('home')" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900">สร้างชุดเฉลยข้อสอบ (Answer Key Configuration)</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5 ml-8">กำหนดจำนวนข้อสอบ 1 - 100 ข้อ พร้อมเลือกคำตอบเฉลย 6 ช้อยส์ (A, B, C, D, E, F)</p>
+        </div>
+
+        <div class="flex items-center space-x-2.5">
+          <button onclick="randomizeAnswerKeys()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+            <span>สุ่มเฉลยตัวอย่าง</span>
+          </button>
+          <button onclick="clearAllAnswerKeys()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>ล้างค่าทั้งหมด</span>
+          </button>
+          <button onclick="saveAndApplyKeys()" class="inline-flex items-center space-x-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white transition shadow-sm">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            <span>บันทึกชุดเฉลยนี้</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Config Grid: Left Panel (Meta & Count Slider) | Right Panel (The 1-100 Answer Grid) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Config Panel -->
+        <div class="lg:col-span-4 space-y-6">
+          
+          <!-- Exam Metadata Box -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center border-b border-slate-100 pb-2.5">
+              <i data-lucide="file-text" class="w-4 h-4 text-blue-600 mr-2"></i>
+              1. ข้อมูลชุดข้อสอบ (Exam Info)
+            </h3>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อวิชา / รหัสวิชา <span class="text-red-500">*</span></label>
+              <input type="text" id="key-input-subject" value="คณิตศาสตร์พื้นฐาน (ม. 4)" class="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ระดับชั้น</label>
+                <select id="key-input-grade" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option>มัธยมศึกษาปีที่ 4</option>
+                  <option>มัธยมศึกษาปีที่ 5</option>
+                  <option>มัธยมศึกษาปีที่ 6</option>
+                  <option>มัธยมศึกษาปีที่ 1-3</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ห้อง / เทอม</label>
+                <input type="text" id="key-input-room" value="ม.4/1 - ม.4/8 (1/2567)" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">รหัสชุดเฉลย (Key ID)</label>
+              <input type="text" id="key-input-id" value="KEY-MATH4-2567" class="w-full text-xs font-mono-code px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600" readonly>
+            </div>
+          </div>
+
+          <!-- Question Count Configurator (1-100) -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h3 class="text-sm font-bold text-slate-800 flex items-center">
+                <i data-lucide="sliders" class="w-4 h-4 text-blue-600 mr-2"></i>
+                2. กำหนดจำนวนข้อสอบ (1 - 100 ข้อ)
+              </h3>
+              <span class="text-lg font-mono-code font-bold text-blue-600" id="key-count-display">30 ข้อ</span>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="grid grid-cols-4 gap-2">
+              <button type="button" onclick="setTotalQuestions(20)" class="preset-btn text-xs py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 font-medium text-slate-700 transition">20 ข้อ</button>
+              <button type="button" onclick="setTotalQuestions(30)" class="preset-btn text-xs py-1.5 rounded-lg border border-blue-500 bg-blue-600 text-white font-medium shadow-sm transition">30 ข้อ</button>
+              <button type="button" onclick="setTotalQuestions(50)" class="preset-btn text-xs py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 font-medium text-slate-700 transition">50 ข้อ</button>
+              <button type="button" onclick="setTotalQuestions(100)" class="preset-btn text-xs py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 font-medium text-slate-700 transition">100 ข้อ</button>
+            </div>
+
+            <!-- Range Slider -->
+            <div class="pt-2">
+              <div class="flex justify-between text-[11px] text-slate-400 font-mono-code mb-1">
+                <span>1 ข้อ</span>
+                <span>50 ข้อ</span>
+                <span>100 ข้อ</span>
+              </div>
+              <input type="range" id="key-count-slider" min="1" max="100" value="30" oninput="setTotalQuestions(this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <!-- Scoring Rule Notice -->
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
+              <div class="flex justify-between">
+                <span>เกณฑ์คะแนนต่อข้อ:</span>
+                <span class="font-bold text-slate-800">1.0 คะแนน</span>
+              </div>
+              <div class="flex justify-between">
+                <span>คะแนนรวมสูงสุด:</span>
+                <span class="font-bold text-red-600 font-mono-code text-sm" id="key-max-score">30.0 คะแนน</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-100 text-[11px] text-blue-900 leading-relaxed">
+              <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 text-blue-600"></i>
+              แต่ละข้อประกอบด้วย 6 ช้อยส์มาตรฐาน <strong>A, B, C, D, E, F</strong> คลิกที่ปุ่มตัวอักษรเพื่อกำหนดเป็นเฉลย
+            </div>
+          </div>
+
+          <!-- Status Indicator -->
+          <div class="bg-gradient-to-br from-[#1e3a8a] to-[#0f172a] text-white p-5 rounded-2xl shadow-md">
+            <div class="flex justify-between items-center text-xs mb-2">
+              <span class="text-blue-200">ความครบถ้วนของเฉลย:</span>
+              <span class="font-mono-code font-bold text-emerald-400" id="key-completion-rate">100%</span>
+            </div>
+            <div class="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+              <div id="key-progress-bar" class="bg-emerald-400 h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+            </div>
+            <div class="mt-3 flex justify-between text-xs">
+              <span id="key-filled-count" class="font-mono-code text-slate-200">เฉลยแล้ว 30 / 30 ข้อ</span>
+              <span class="text-slate-300">คลิกเปลี่ยนได้ทุกข้อ</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Answer Key Matrix Grid (Supports 1-100 questions) -->
+        <div class="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4 mb-4 gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm">
+                  <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">ตารางตัวเลือกเฉลยคำตอบ (Answer Key Matrix)</h3>
+                  <p class="text-xs text-slate-500">คลิกปุ่มตัวอักษรเพื่อเปลี่ยนตัวเลือกเฉลยที่ถูกต้อง</p>
+                </div>
+              </div>
+
+              <!-- Legend -->
+              <div class="flex items-center space-x-3 text-xs">
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#1e3a8a] mr-1.5"></span>ตัวเลือกที่เฉลย</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-slate-100 border border-slate-300 mr-1.5"></span>ไม่ได้เลือก</span>
+              </div>
+            </div>
+
+            <!-- Fast Filter Tabs for large question sets (1-25, 26-50, etc.) -->
+            <div id="key-filter-tabs" class="flex flex-wrap gap-1.5 mb-4 text-xs">
+              <!-- Dynamically populated or hidden based on count -->
+            </div>
+
+            <!-- Grid of Questions Container (Scrollable or multi-column) -->
+            <div id="answer-key-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1.5">
+              <!-- Dynamically rendered by renderAnswerKeyGrid() -->
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons in Keys View -->
+          <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <button onclick="navigateTo('home')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
+              &larr; ย้อนกลับหน้าแรก
+            </button>
+            <div class="flex items-center space-x-2.5">
+              <button onclick="saveAndApplyKeys()" class="text-xs font-bold text-white bg-[#1e3a8a] hover:bg-[#172554] px-5 py-2.5 rounded-xl transition shadow">
+                บันทึกชุดเฉลย
+              </button>
+              <button onclick="saveAndProceedToGrading()" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl transition shadow-lg shadow-red-600/20 flex items-center space-x-1.5">
+                <span>ไปยังหน้าตรวจข้อสอบต่อทันที</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= PAGE 3: EXAM GRADER (GRADING & AI SCORING) ================= -->
+    <section id="view-grade" class="space-y-6 hidden">
+      
+      <!-- Top Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+        <div>
+          <div class="flex items-center space-x-2">
+            <button onclick="navigateTo('home')" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900">ระบบตรวจข้อสอบและประเมินผลคะแนน (Exam Grader)</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5 ml-8">ดึงจำนวนข้อและเฉลยอัตโนมัติ • ป้อนคำตอบแล้วกดปุ่มตรวจ AI ด้านล่าง</p>
+        </div>
+
+        <div class="flex items-center space-x-2.5">
+          <button onclick="fillRandomStudentAnswers()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition">
+            <i data-lucide="dice-5" class="w-3.5 h-3.5"></i>
+            <span>สุ่มคำตอบครบทุกข้อ</span>
+          </button>
+          <button onclick="fillMockHighScorer()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition">
+            <i data-lucide="award" class="w-3.5 h-3.5"></i>
+            <span>ชุดจำลองคะแนนสูง</span>
+          </button>
+          <button onclick="clearStudentAnswers()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>ล้างคำตอบ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Grading Layout: Left (Student Info & Key Summary) | Right (Answer Sheet Grid) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Student Details & Active Key Badge -->
+        <div class="lg:col-span-4 space-y-6">
+          
+          <!-- Key Info Pill -->
+          <div class="bg-gradient-to-br from-[#1e3a8a] to-[#172554] text-white p-5 rounded-2xl shadow-md space-y-3">
+            <div class="flex items-center justify-between text-xs text-blue-200">
+              <span class="inline-flex items-center">
+                <i data-lucide="link" class="w-3.5 h-3.5 mr-1"></i>
+                ชุดเฉลยมาตรฐานที่ผูกกับระบบ
+              </span>
+              <button onclick="navigateTo('keys')" class="underline hover:text-white">เปลี่ยนเฉลย</button>
+            </div>
+            <h3 class="text-lg font-bold text-white" id="grader-key-title">คณิตศาสตร์พื้นฐาน (ม. 4)</h3>
+            <p class="text-xs text-blue-200 font-mono-code">รหัส: MA31101 • ภาคเรียนที่ 1/2567</p>
+
+            <div class="pt-2 grid grid-cols-2 gap-2 text-center">
+              <div class="bg-white/10 rounded-xl p-2.5">
+                <span class="text-[11px] text-slate-300 block">จำนวนข้อ</span>
+                <span class="text-xl font-bold font-mono-code text-white" id="grader-key-count">30</span>
+              </div>
+              <div class="bg-white/10 rounded-xl p-2.5">
+                <span class="text-[11px] text-slate-300 block">คะแนนเต็ม</span>
+                <span class="text-xl font-bold font-mono-code text-amber-400" id="grader-max-score">30.0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Profile Form Input -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center border-b border-slate-100 pb-2.5">
+              <i data-lucide="user-check" class="w-4 h-4 text-blue-600 mr-2"></i>
+              ข้อมูลนักเรียนผู้เข้าสอบ
+            </h3>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">เลขประจำตัวนักเรียน (Student ID) <span class="text-red-500">*</span></label>
+              <input type="text" id="student-id" value="STD-670104" placeholder="เช่น 670101" class="w-full text-xs font-mono-code font-bold px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ - นามสกุลนักเรียน <span class="text-red-500">*</span></label>
+              <input type="text" id="student-name" value="นายธนกฤต เมธาอัครเดช" placeholder="ชื่อ นามสกุล" class="w-full text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ห้องเรียน (Class)</label>
+                <input type="text" id="student-room" value="ม.4/1" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">เลขที่ (No.)</label>
+                <input type="number" id="student-no" value="14" class="w-full text-xs font-mono-code px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Answer Progress Mini Widget -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm text-xs space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500">ความคืบหน้าการป้อนคำตอบ:</span>
+              <span class="font-bold font-mono-code text-blue-600" id="grader-answered-stat">30 / 30 ข้อ</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div id="grader-answered-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+            </div>
+            <p class="text-[11px] text-slate-400">เมื่อกรอกครบแล้ว กดปุ่มสีแดงด้านล่างสุดเพื่อให้ AI ประมวลผล</p>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Student Answer Sheet Grid (A - F for every question) -->
+        <div class="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div class="flex items-center space-x-2">
+                <span class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold text-sm">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">แผงป้อนกระดาษคำตอบ (Student Answer Sheet)</h3>
+                  <p class="text-xs text-slate-500">เลือกคำตอบที่นักเรียนฝนมา (A - F) ระบบบันทึกอัตโนมัติแบบเรียลไทม์</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono-code bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg">
+                ตอบแล้ว: <span id="grader-badge-count" class="font-bold text-blue-700">30</span> / <span id="grader-badge-total">30</span>
+              </span>
+            </div>
+
+            <!-- Student Choices Matrix -->
+            <div id="student-answer-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[580px] overflow-y-auto pr-1.5">
+              <!-- Injected by renderStudentAnswerGrid() -->
+            </div>
+          </div>
+
+          <!-- BOTTOM TRIGGER BUTTON: The AI Grade Button Requested by User -->
+          <div class="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-red-50 to-blue-50 p-4 rounded-2xl border">
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm flex items-center">
+                <i data-lucide="sparkles" class="w-4 h-4 text-red-600 mr-1.5"></i>
+                พร้อมตรวจและประมวลผลการสอบ
+              </h4>
+              <p class="text-xs text-slate-500">ระบบจะตรวจเทียบกับชุดเฉลย คำนวณเกรด ตัดสถิติ และบันทึกประวัติทันที</p>
+            </div>
+
+            <button onclick="executeAIGrading()" id="btn-grade-now" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-xl shadow-red-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0">
+              <i data-lucide="scan-line" class="w-5 h-5"></i>
+              <span>ตรวจข้อสอบด้วย AI (Grade Exam Now)</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= MODAL / OVERLAY: GRADING RESULT SUMMARY ================= -->
+    <div id="result-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+        
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-[#1e3a8a] to-[#0f172a] text-white px-6 py-5 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-lg">
+              <i data-lucide="award" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-lg">ผลการตรวจข้อสอบ AI สำเร็จ</h3>
+              <p class="text-xs text-blue-200" id="res-modal-subtitle">รหัสนักเรียน: STD-670104 • นายธนกฤต เมธาอัครเดช</p>
+            </div>
+          </div>
+          <button onclick="closeResultModal()" class="text-slate-300 hover:text-white p-1 rounded-lg">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body: The requested Score / Full Score & Grade Breakdown -->
+        <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          
+          <!-- Big Highlighted Score Box -->
+          <div class="bg-gradient-to-br from-slate-50 to-blue-50/50 rounded-2xl p-6 border border-slate-200/90 text-center relative overflow-hidden">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">สรุปคะแนนประเมินผล</span>
+            
+            <div class="flex items-baseline justify-center space-x-2 my-2">
+              <span class="text-5xl sm:text-6xl font-extrabold font-mono-code text-blue-900" id="res-score-earned">28</span>
+              <span class="text-2xl sm:text-3xl font-extrabold font-mono-code text-slate-400">/</span>
+              <span class="text-2xl sm:text-3xl font-extrabold font-mono-code text-slate-500" id="res-score-total">30</span>
+              <span class="text-sm font-bold text-slate-600 ml-1">คะแนน</span>
+            </div>
+
+            <!-- Stats badges -->
+            <div class="flex flex-wrap items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-200/80 text-xs">
+              <div class="bg-white px-3.5 py-1.5 rounded-xl border shadow-sm">
+                <span class="text-slate-400 block text-[10px]">คิดเป็นร้อยละ</span>
+                <span class="font-bold font-mono-code text-emerald-600 text-sm" id="res-percentage">93.3%</span>
+              </div>
+              <div class="bg-white px-3.5 py-1.5 rounded-xl border shadow-sm">
+                <span class="text-slate-400 block text-[10px]">เกรดที่ได้</span>
+                <span class="font-bold font-mono-code text-blue-700 text-sm" id="res-grade">เกรด 4.0</span>
+              </div>
+              <div class="bg-white px-3.5 py-1.5 rounded-xl border shadow-sm">
+                <span class="text-slate-400 block text-[10px]">สถานะการประเมิน</span>
+                <span class="font-bold text-emerald-600 text-sm" id="res-pass-status">✓ ผ่านเกณฑ์</span>
+              </div>
+              <div class="bg-white px-3.5 py-1.5 rounded-xl border shadow-sm">
+                <span class="text-slate-400 block text-[10px]">ตอบผิดทั้งหมด</span>
+                <span class="font-bold text-red-600 text-sm font-mono-code" id="res-wrong-count">2 ข้อ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wrong Answer Analysis / Detailed Corrections -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+              <span>ข้อที่ตรวจพบข้อผิดพลาดและเฉลยที่ถูกต้อง:</span>
+              <span class="text-red-600 font-mono-code text-[11px]" id="res-wrong-summary">ตรวจพบ 2 ข้อ</span>
+            </h4>
+
+            <div id="res-wrong-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+              <!-- Injected by showGradingResult() -->
+            </div>
+          </div>
+
+          <!-- Visual Answer Matrix Strip (Quick visual) -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <span class="text-xs font-semibold text-slate-600 block mb-2">ภาพรวมแผนผังคำตอบดิจิทัล (Matrix Overview):</span>
+            <div id="res-matrix-strip" class="grid grid-cols-10 gap-1.5 text-center text-[10px] font-mono-code">
+              <!-- 1 to N blocks colored green or red -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <button onclick="closeResultModal()" class="text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition">
+            ปิดหน้านี้
+          </button>
+          
+          <div class="flex items-center space-x-2">
+            <button onclick="gradeNextStudent()" class="text-xs font-bold px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              + ตรวจคนถัดไป
+            </button>
+            <button onclick="viewInHistoryFromModal()" class="text-xs font-bold px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition shadow-sm">
+              เปิดดูในประวัติการตรวจ &rarr;
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= PAGE 4: GRADING HISTORY ================= -->
+    <section id="view-history" class="space-y-6 hidden">
+      
+      <!-- Top Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+        <div>
+          <div class="flex items-center space-x-2">
+            <button onclick="navigateTo('home')" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900">ระบบประวัติการตรวจข้อสอบและวิเคราะห์คะแนน</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5 ml-8">ฐานข้อมูลบันทึกคะแนนสอบฉบับประมวลผลผ่านระบบ OMR ย้อนหลัง พร้อมรายงานสถิติรายบุคคล</p>
+        </div>
+
+        <div class="flex items-center space-x-2.5">
+          <button onclick="navigateTo('home')" class="inline-flex items-center space-x-1 text-xs font-medium px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i data-lucide="home" class="w-3.5 h-3.5"></i>
+            <span>ย้อนกลับหน้าแรก</span>
+          </button>
+          <button onclick="exportHistoryCSV()" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition border border-emerald-200">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <span>ส่งออก CSV</span>
+          </button>
+          <button onclick="navigateTo('grade')" class="inline-flex items-center space-x-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition shadow-sm">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ ตรวจข้อสอบใหม่</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Highlight Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+          <span class="text-xs text-slate-500 font-medium block">ตรวจข้อสอบสะสม</span>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-bold font-mono-code text-slate-900" id="hist-stat-total">128 ครั้ง</span>
+            <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-mono-code">+1 บันทึก</span>
+          </div>
+          <span class="text-[11px] text-slate-400 mt-2 block">100% ประมวลผลผ่าน AI</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+          <span class="text-xs text-slate-500 font-medium block">คะแนนเฉลี่ยรวม</span>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-bold font-mono-code text-blue-700" id="hist-stat-avg">24.2 / 30</span>
+            <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-mono-code">80.6%</span>
+          </div>
+          <span class="text-[11px] text-slate-400 mt-2 block">เกณฑ์มาตรฐาน 60%</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+          <span class="text-xs text-slate-500 font-medium block">จำนวนผู้ผ่านเกณฑ์</span>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-bold font-mono-code text-emerald-600" id="hist-stat-pass">116 คน</span>
+            <span class="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-mono-code">90.6%</span>
+          </div>
+          <span class="text-[11px] text-emerald-600 mt-2 block">✓ สูงกว่าเป้าหมาย</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+          <span class="text-xs text-slate-500 font-medium block">จำนวนผู้ไม่ผ่านเกณฑ์</span>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-bold font-mono-code text-red-600" id="hist-stat-fail">12 คน</span>
+            <span class="text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded font-mono-code">9.4%</span>
+          </div>
+          <span class="text-[11px] text-red-500 mt-2 block">ต้องสอบแก้ตัว</span>
+        </div>
+
+      </div>
+
+      <!-- History Table & Detail Split -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Table (8 cols) -->
+        <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+          
+          <!-- Filters & Search -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+              <input type="text" id="history-search" oninput="filterHistoryTable()" placeholder="ค้นหาชื่อ, รหัสนักเรียน, หรือห้อง..." class="w-full text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <select id="history-filter-subject" onchange="filterHistoryTable()" class="text-xs px-2.5 py-2 rounded-xl border border-slate-200 bg-white">
+                <option value="all">ทุกรายวิชา</option>
+                <option value="math">คณิตศาสตร์ ม.4</option>
+                <option value="physics">ฟิสิกส์ ม.5</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Full Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-slate-400 font-semibold border-b border-slate-100">
+                  <th class="py-2.5 px-3">วันเวลาตรวจ</th>
+                  <th class="py-2.5 px-3">รหัสประจำตัว</th>
+                  <th class="py-2.5 px-3">ชื่อ - สกุลนักเรียน</th>
+                  <th class="py-2.5 px-3">ชุดวิชา</th>
+                  <th class="py-2.5 px-3 text-center">คะแนนที่ได้</th>
+                  <th class="py-2.5 px-3 text-center">เกรด</th>
+                  <th class="py-2.5 px-3 text-right">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="history-full-tbody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-xs text-slate-400">
+            <span id="history-row-count-label">แสดงบันทึกทั้งหมด</span>
+            <span class="text-[11px]">คลิกที่แถวเพื่อดูรายละเอียดกระดาษคำตอบทางขวา</span>
+          </div>
+        </div>
+
+        <!-- Selected Student Detail Card (4 cols) -->
+        <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+              <i data-lucide="user" class="w-4 h-4 text-blue-600 mr-1.5"></i>
+              การวิเคราะห์ผลรายบุคคล
+            </h3>
+            <span class="text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-semibold" id="detail-pass-badge">ผ่านเกณฑ์</span>
+          </div>
+
+          <div>
+            <h4 class="text-base font-bold text-slate-900" id="detail-student-name">นายธนกฤต เมธาอัครเดช</h4>
+            <p class="text-xs text-slate-500 font-mono-code mt-0.5" id="detail-student-meta">STD-670104 • ห้อง 4/1 • เลขที่ 14</p>
+          </div>
+
+          <!-- Score Card in detail -->
+          <div class="bg-gradient-to-br from-slate-50 to-blue-50/70 p-4 rounded-xl border border-slate-200 text-center">
+            <span class="text-[11px] text-slate-500 block">คะแนนสอบสุทธิ</span>
+            <div class="text-3xl font-extrabold font-mono-code text-blue-900 my-1">
+              <span id="detail-score-val">28</span><span class="text-slate-400 text-xl font-normal"> / </span><span id="detail-total-val" class="text-slate-500 text-xl">30</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-200 text-xs">
+              <div>
+                <span class="text-slate-400 text-[10px] block">คิดเป็นร้อยละ</span>
+                <span class="font-bold text-emerald-600 font-mono-code" id="detail-percent-val">93.3%</span>
+              </div>
+              <div>
+                <span class="text-slate-400 text-[10px] block">ผลการเรียน</span>
+                <span class="font-bold text-blue-700 font-mono-code" id="detail-grade-val">เกรด 4.0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Mistake list -->
+          <div class="space-y-2">
+            <span class="text-xs font-semibold text-slate-600 block">สรุปข้อผิดและเฉลย:</span>
+            <div id="detail-wrong-items" class="space-y-1.5 max-h-40 overflow-y-auto text-xs">
+              <!-- Injected by selectHistoryItem() -->
+            </div>
+          </div>
+
+          <!-- Digital Matrix Preview -->
+          <div class="space-y-1.5 pt-2 border-t border-slate-100">
+            <span class="text-[11px] text-slate-500 block">กระดาษคำตอบดิจิทัล (Digital OMR):</span>
+            <div id="detail-matrix-preview" class="grid grid-cols-6 gap-1 text-[9px] font-mono-code text-center">
+              <!-- 30 dots/squares -->
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex space-x-2">
+            <button onclick="window.print()" class="w-full text-xs font-medium py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center justify-center space-x-1.5">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+              <span>พิมพ์ใบผลสอบ</span>
+            </button>
+            <button onclick="alert('ส่งคะแนนแจ้งเตือนไปยังระบบทะเบียนและผู้ปกครองเรียบร้อยแล้ว')" class="w-full text-xs font-semibold py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center space-x-1.5">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>ส่งผลสอบ</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="font-bold text-slate-800">ExamGrade AI Pro Core v4.2.0-STABLE</span>
+        <span>•</span>
+        <span>© 2025 ระบบบริการตรวจและประเมินผลข้อสอบมาตรฐานการศึกษา สวนลิขสิทธิ์</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-slate-400">ปุ่มลัด: <span class="font-mono-code bg-slate-100 px-1 py-0.5 rounded text-slate-600">Space</span> ถัดไป | <span class="font-mono-code bg-slate-100 px-1 py-0.5 rounded text-slate-600">A-F</span> เลือกคำตอบ</span>
+        <button onclick="navigateTo('home')" class="hover:text-red-600">กลับหน้าแรก</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= REAL APPLICATION JAVASCRIPT LOGIC ================= -->
+  <script>
+    // ---------- GLOBAL STATE ----------
+    const CHOICES = ['A', 'B', 'C', 'D', 'E', 'F'];
+    
+    // Application Navigation State
+    let currentView = 'home';
+    let previousView = 'home';
+
+    // Exam Answer Key Config State
+    let examConfig = {
+      subject: 'คณิตศาสตร์พื้นฐาน (ม. 4)',
+      grade: 'มัธยมศึกษาปีที่ 4',
+      room: 'ม.4/1 - ม.4/8',
+      keyId: 'KEY-MATH4-2567',
+      totalQuestions: 30,
+      keys: {} // { 1: 'A', 2: 'C', ... }
+    };
+
+    // Current Student Grading State
+    let currentStudent = {
+      id: 'STD-670104',
+      name: 'นายธนกฤต เมธาอัครเดช',
+      room: 'ม.4/1',
+      no: '14',
+      answers: {} // { 1: 'A', 2: 'B', ... }
+    };
+
+    // Historical Records Store
+    let historyRecords = [
+      {
+        id: 'STD-670104',
+        name: 'นายธนกฤต เมธาอัครเดช',
+        room: 'ม.4/1',
+        no: '14',
+        subject: 'คณิตศาสตร์พื้นฐาน (ม. 4)',
+        score: 28,
+        total: 30,
+        percentage: 93.3,
+        grade: '4.0',
+        passed: true,
+        time: '24 ต.ค. 2567, 14:35 น.',
+        wrongDetails: [
+          { q: 7, student: 'C', correct: 'D', note: 'เรื่อง: ฟังก์ชันเอกซ์โพเนนเชียล' },
+          { q: 14, student: 'A', correct: 'B', note: 'เรื่อง: เซตและสับเซต' }
+        ]
+      },
+      {
+        id: 'STD-670105',
+        name: 'นางสาวณิชชา วัฒนศิริ',
+        room: 'ม.4/1',
+        no: '02',
+        subject: 'คณิตศาสตร์พื้นฐาน (ม. 4)',
+        score: 25,
+        total: 30,
+        percentage: 83.3,
+        grade: '3.5',
+        passed: true,
+        time: '24 ต.ค. 2567, 14:32 น.',
+        wrongDetails: [
+          { q: 3, student: 'B', correct: 'A', note: 'การหาอนุพันธ์' },
+          { q: 9, student: 'D', correct: 'C', note: 'เมทริกซ์' },
+          { q: 18, student: 'F', correct: 'E', note: 'ภาคตัดกรวย' },
+          { q: 22, student: 'A', correct: 'B', note: 'สถิติพื้นฐาน' },
+          { q: 29, student: 'C', correct: 'D', note: 'ลำดับและอนุกรม' }
+        ]
+      },
+      {
+        id: 'STD-670108',
+        name: 'นายปิยะพงษ์ ศรีสุวรรณ',
+        room: 'ม.4/2',
+        no: '21',
+        subject: 'ฟิสิกส์ (ม. 5)',
+        score: 14,
+        total: 30,
+        percentage: 46.7,
+        grade: '1.0',
+        passed: false,
+        time: '24 ต.ค. 2567, 14:28 น.',
+        wrongDetails: [
+          { q: 2, student: 'A', correct: 'B', note: 'การเคลื่อนที่แนวตรง' },
+          { q: 4, student: 'C', correct: 'D', note: 'กฎของนิวตัน' },
+          { q: 7, student: 'B', correct: 'A', note: 'งานและพลังงาน' }
+        ]
+      },
+      {
+        id: 'STD-670112',
+        name: 'นางสาวพิมผกา รัตนโชติ',
+        room: 'ม.4/1',
+        no: '09',
+        subject: 'คณิตศาสตร์พื้นฐาน (ม. 4)',
+        score: 30,
+        total: 30,
+        percentage: 100.0,
+        grade: '4.0',
+        passed: true,
+        time: '24 ต.ค. 2567, 14:15 น.',
+        wrongDetails: []
+      }
+    ];
+
+    let selectedHistoryItem = historyRecords[0];
+
+    // ---------- INITIALIZATION ----------
+    function initDefaultKeys() {
+      // Seed default standard answers for 30 questions
+      const seedAnswers = [
+        'A', 'C', 'B', 'D', 'A', 'E', 'D', 'C', 'B', 'A',
+        'B', 'C', 'D', 'B', 'F', 'A', 'C', 'E', 'B', 'D',
+        'C', 'A', 'E', 'F', 'B', 'D', 'A', 'C', 'E', 'B'
+      ];
+      for (let i = 1; i <= 100; i++) {
+        examConfig.keys[i] = seedAnswers[(i - 1) % seedAnswers.length];
+      }
+      // Seed default student answers matching most of the keys
+      for (let i = 1; i <= 100; i++) {
+        currentStudent.answers[i] = examConfig.keys[i];
+      }
+      // Make 2 wrong answers for sample student (q7 and q14)
+      currentStudent.answers[7] = 'C';
+      currentStudent.answers[14] = 'A';
+    }
+
+    // ---------- ROUTING & NAVIGATION ----------
+    function navigateTo(viewId) {
+      if (currentView === viewId) return;
+      previousView = currentView;
+      currentView = viewId;
+
+      // Update section display
+      const views = ['home', 'keys', 'grade', 'history'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) {
+          if (v === viewId) {
+            el.classList.remove('hidden');
+            el.classList.add('block');
+          } else {
+            el.classList.add('hidden');
+            el.classList.remove('block');
+          }
+        }
+      });
+
+      // Update Nav buttons styling
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active-nav');
+        btn.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+      });
+      const activeBtn = document.getElementById(`nav-${viewId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active-nav');
+        activeBtn.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+      }
+
+      // Update breadcrumb title
+      const subbarTitles = {
+        home: 'หน้าหลักระบบ ExamGrade AI',
+        keys: 'กำหนดชุดเฉลยข้อสอบ (1-100 ข้อ ช้อยส์ A-F)',
+        grade: 'ระบบตรวจข้อสอบและประเมินผลคะแนน',
+        history: 'ประวัติการตรวจข้อสอบและวิเคราะห์ผล'
+      };
+      document.getElementById('current-subbar-title').innerText = subbarTitles[viewId] || 'ระบบ ExamGrade AI';
+
+      // Re-render specific views if required
+      if (viewId === 'keys') {
+        renderAnswerKeyGrid();
+      } else if (viewId === 'grade') {
+        syncGraderWithActiveKey();
+        renderStudentAnswerGrid();
+      } else if (viewId === 'history') {
+        renderFullHistoryTable();
+      } else if (viewId === 'home') {
+        renderHomeDashboard();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function navigateBack() {
+      if (previousView && previousView !== currentView) {
+        navigateTo(previousView);
+      } else {
+        navigateTo('home');
+      }
+    }
+
+    // ---------- ANSWER KEY MATRIX ENGINE (PAGE 2) ----------
+    function setTotalQuestions(count) {
+      count = parseInt(count);
+      if (count < 1) count = 1;
+      if (count > 100) count = 100;
+      examConfig.totalQuestions = count;
+      document.getElementById('key-count-slider').value = count;
+      document.getElementById('key-count-display').innerText = `${count} ข้อ`;
+      document.getElementById('key-max-score').innerText = `${count}.0 คะแนน`;
+
+      // Update preset buttons styling
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.innerText.includes(`${count} ข้อ`)) {
+          btn.className = 'preset-btn text-xs py-1.5 rounded-lg border border-blue-500 bg-blue-600 text-white font-medium shadow-sm transition';
+        } else {
+          btn.className = 'preset-btn text-xs py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 font-medium text-slate-700 transition';
+        }
+      });
+
+      renderAnswerKeyGrid();
+      updateKeyProgress();
+    }
+
+    function selectKeyChoice(qNum, choice) {
+      examConfig.keys[qNum] = choice;
+      renderAnswerKeyGrid(false); // fast re-render
+      updateKeyProgress();
+    }
+
+    function updateKeyProgress() {
+      let filled = 0;
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        if (examConfig.keys[i]) filled++;
+      }
+      const rate = Math.round((filled / examConfig.totalQuestions) * 100);
+      document.getElementById('key-completion-rate').innerText = `${rate}%`;
+      document.getElementById('key-progress-bar').style.width = `${rate}%`;
+      document.getElementById('key-filled-count').innerText = `เฉลยแล้ว ${filled} / ${examConfig.totalQuestions} ข้อ`;
+    }
+
+    function renderAnswerKeyGrid(resetFilter = true) {
+      const container = document.getElementById('answer-key-grid-container');
+      if (!container) return;
+
+      let html = '';
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        const currentChoice = examConfig.keys[i] || '';
+        
+        let choiceButtons = CHOICES.map(c => {
+          const isSelected = currentChoice === c;
+          const btnClass = isSelected
+            ? 'bg-[#1e3a8a] text-white font-bold shadow ring-2 ring-blue-500/50'
+            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900';
+          return `<button type="button" onclick="selectKeyChoice(${i}, '${c}')" class="w-8 h-8 rounded-lg text-xs font-mono-code transition ${btnClass}">${c}</button>`;
+        }).join('');
+
+        html += `
+          <div class="flex items-center justify-between p-2.5 rounded-xl border ${currentChoice ? 'border-slate-200 bg-slate-50/50' : 'border-red-200 bg-red-50/40'}">
+            <div class="flex items-center space-x-2">
+              <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-900 font-mono-code font-bold text-xs flex items-center justify-center">${i}.</span>
+              <span class="text-xs text-slate-500 hidden sm:inline">ข้อที่ ${i}</span>
+            </div>
+            <div class="flex items-center space-x-1 sm:space-x-1.5">
+              ${choiceButtons}
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+      updateKeyProgress();
+    }
+
+    function randomizeAnswerKeys() {
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        const randIndex = Math.floor(Math.random() * CHOICES.length);
+        examConfig.keys[i] = CHOICES[randIndex];
+      }
+      renderAnswerKeyGrid();
+    }
+
+    function clearAllAnswerKeys() {
+      if (confirm('คุณต้องการล้างตัวเลือกเฉลยทั้งหมดหรือไม่?')) {
+        for (let i = 1; i <= examConfig.totalQuestions; i++) {
+          delete examConfig.keys[i];
+        }
+        renderAnswerKeyGrid();
+      }
+    }
+
+    function saveAndApplyKeys() {
+      examConfig.subject = document.getElementById('key-input-subject').value || 'คณิตศาสตร์พื้นฐาน (ม. 4)';
+      examConfig.grade = document.getElementById('key-input-grade').value;
+      examConfig.room = document.getElementById('key-input-room').value;
+
+      // Update navbar indicator
+      document.getElementById('nav-active-key-name').innerText = examConfig.subject;
+      document.getElementById('nav-active-key-count').innerText = `${examConfig.totalQuestions} ข้อ`;
+
+      alert(`บันทึกชุดเฉลย "${examConfig.subject}" (${examConfig.totalQuestions} ข้อ) เรียบร้อยแล้ว ระบบพร้อมใช้ตรวจทันที!`);
+    }
+
+    function saveAndProceedToGrading() {
+      saveAndApplyKeys();
+      navigateTo('grade');
+    }
+
+    // ---------- STUDENT EXAM GRADER ENGINE (PAGE 3) ----------
+    function syncGraderWithActiveKey() {
+      document.getElementById('grader-key-title').innerText = examConfig.subject;
+      document.getElementById('grader-key-count').innerText = examConfig.totalQuestions;
+      document.getElementById('grader-max-score').innerText = `${examConfig.totalQuestions}.0`;
+      document.getElementById('grader-badge-total').innerText = examConfig.totalQuestions;
+
+      // If student answers array does not have keys up to totalQuestions, default them
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        if (!currentStudent.answers[i]) {
+          currentStudent.answers[i] = examConfig.keys[i] || 'A';
+        }
+      }
+    }
+
+    function selectStudentAnswer(qNum, choice) {
+      currentStudent.answers[qNum] = choice;
+      renderStudentAnswerGrid();
+    }
+
+    function renderStudentAnswerGrid() {
+      const container = document.getElementById('student-answer-grid');
+      if (!container) return;
+
+      let answeredCount = 0;
+      let html = '';
+
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        const studentChoice = currentStudent.answers[i] || '';
+        if (studentChoice) answeredCount++;
+
+        let choiceButtons = CHOICES.map(c => {
+          const isSelected = studentChoice === c;
+          const btnClass = isSelected
+            ? 'bg-red-600 text-white font-bold shadow ring-2 ring-red-500/50'
+            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900';
+          return `<button type="button" onclick="selectStudentAnswer(${i}, '${c}')" class="w-8 h-8 rounded-lg text-xs font-mono-code transition ${btnClass}">${c}</button>`;
+        }).join('');
+
+        html += `
+          <div class="flex items-center justify-between p-2.5 rounded-xl border ${studentChoice ? 'border-slate-200 bg-white' : 'border-amber-200 bg-amber-50/40'}">
+            <div class="flex items-center space-x-2">
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 font-mono-code font-bold text-xs flex items-center justify-center">${i}.</span>
+              <span class="text-xs font-medium text-slate-700">ข้อที่ ${i}</span>
+            </div>
+            <div class="flex items-center space-x-1 sm:space-x-1.5">
+              ${choiceButtons}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      document.getElementById('grader-answered-stat').innerText = `${answeredCount} / ${examConfig.totalQuestions} ข้อ`;
+      document.getElementById('grader-badge-count').innerText = answeredCount;
+      const pct = Math.round((answeredCount / examConfig.totalQuestions) * 100);
+      document.getElementById('grader-answered-bar').style.width = `${pct}%`;
+    }
+
+    function fillRandomStudentAnswers() {
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        const randIndex = Math.floor(Math.random() * CHOICES.length);
+        currentStudent.answers[i] = CHOICES[randIndex];
+      }
+      renderStudentAnswerGrid();
+    }
+
+    function fillMockHighScorer() {
+      // 90% correct
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        currentStudent.answers[i] = examConfig.keys[i];
+      }
+      // Make 2 wrong
+      if (examConfig.totalQuestions >= 7) currentStudent.answers[7] = currentStudent.answers[7] === 'A' ? 'B' : 'A';
+      if (examConfig.totalQuestions >= 14) currentStudent.answers[14] = currentStudent.answers[14] === 'C' ? 'D' : 'C';
+      renderStudentAnswerGrid();
+    }
+
+    function clearStudentAnswers() {
+      for (let i = 1; i <= examConfig.totalQuestions; i++) {
+        delete currentStudent.answers[i];
+      }
+      renderStudentAnswerGrid();
+    }
+
+    // ---------- AI GRADING EXECUTION & MODAL ----------
+    function executeAIGrading() {
+      // Collect input
+      const sId = document.getElementById('student-id').value.trim() || 'STD-' + Math.floor(100000 + Math.random() * 900000);
+      const sName = document.getElementById('student-name').value.trim() || 'นักเรียนไม่ระบุชื่อ';
+      const sRoom = document.getElementById('student-room').value.trim() || 'ม.4/1';
+      const sNo = document.getElementById('student-no').value.trim() || '1';
+
+      // Verify answers
+      let earnedScore = 0;
+      let wrongList = [];
+      const total = examConfig.totalQuestions;
+
+      for (let i = 1; i <= total; i++) {
+        const correct = examConfig.keys[i] || 'A';
+        const student = currentStudent.answers[i] || '-';
+        if (student === correct) {
+          earnedScore += 1;
+        } else {
+          wrongList.push({
+            q: i,
+            student: student,
+            correct: correct,
+            note: `ข้อที่ ${i}`
+          });
+        }
+      }
+
+      const percentage = parseFloat(((earnedScore / total) * 100).toFixed(1));
+      let grade = '0';
+      if (percentage >= 80) grade = '4.0';
+      else if (percentage >= 75) grade = '3.5';
+      else if (percentage >= 70) grade = '3.0';
+      else if (percentage >= 65) grade = '2.5';
+      else if (percentage >= 60) grade = '2.0';
+      else if (percentage >= 55) grade = '1.5';
+      else if (percentage >= 50) grade = '1.0';
+      else grade = '0';
+
+      const passed = percentage >= 60.0;
+
+      // Save into historical record
+      const now = new Date();
+      const timeStr = `${now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}, ${now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
+
+      const newRecord = {
+        id: sId,
+        name: sName,
+        room: sRoom,
+        no: sNo,
+        subject: examConfig.subject,
+        score: earnedScore,
+        total: total,
+        percentage: percentage,
+        grade: grade,
+        passed: passed,
+        time: timeStr,
+        wrongDetails: wrongList,
+        answers: { ...currentStudent.answers }
+      };
+
+      // Add to front of history
+      historyRecords.unshift(newRecord);
+      selectedHistoryItem = newRecord;
+
+      // Display in Modal
+      showGradingResultModal(newRecord);
+    }
+
+    function showGradingResultModal(record) {
+      document.getElementById('res-modal-subtitle').innerText = `รหัสนักเรียน: ${record.id} • ${record.name} (ห้อง ${record.room})`;
+      document.getElementById('res-score-earned').innerText = record.score;
+      document.getElementById('res-score-total').innerText = record.total;
+      document.getElementById('res-percentage').innerText = `${record.percentage}%`;
+      document.getElementById('res-grade').innerText = `เกรด ${record.grade}`;
+      
+      const passBadge = document.getElementById('res-pass-status');
+      if (record.passed) {
+        passBadge.innerText = '✓ ผ่านเกณฑ์มาตรฐาน';
+        passBadge.className = 'font-bold text-emerald-600 text-sm';
+      } else {
+        passBadge.innerText = '✗ ต้องสอบแก้ตัว (ไม่ผ่านเกณฑ์)';
+        passBadge.className = 'font-bold text-red-600 text-sm';
+      }
+
+      document.getElementById('res-wrong-count').innerText = `${record.wrongDetails.length} ข้อ`;
+      document.getElementById('res-wrong-summary').innerText = `ตรวจพบข้อผิด ${record.wrongDetails.length} ข้อ จากทั้งหมด ${record.total} ข้อ`;
+
+      // Wrong List Markup
+      const wrongContainer = document.getElementById('res-wrong-list');
+      if (record.wrongDetails.length === 0) {
+        wrongContainer.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-xs flex items-center">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 mr-2 flex-shrink-0"></i>
+            <span>ยอดเยี่ยมมาก! นักเรียนทำข้อสอบถูกต้องครบทุกข้อ 100% เต็ม (Perfect Score)</span>
+          </div>
+        `;
+      } else {
+        let wrongHtml = '';
+        record.wrongDetails.forEach(item => {
+          wrongHtml += `
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-red-200 bg-red-50/50 text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded bg-red-600 text-white font-mono-code font-bold flex items-center justify-center text-[11px]">${item.q}</span>
+                <span class="font-medium text-slate-800">ข้อที่ ${item.q}: ตอบ <span class="font-mono-code font-bold text-red-600 px-1 bg-white rounded">${item.student}</span></span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-slate-500">เฉลยที่ถูกต้อง:</span>
+                <span class="font-mono-code font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">${item.correct}</span>
+                <span class="text-red-600 font-mono-code font-semibold text-[11px]">(-1.0 คะแนน)</span>
+              </div>
+            </div>
+          `;
+        });
+        wrongContainer.innerHTML = wrongHtml;
+      }
+
+      // Visual Strip Matrix (1 to N)
+      const matrixStrip = document.getElementById('res-matrix-strip');
+      let matrixHtml = '';
+      for (let i = 1; i <= record.total; i++) {
+        const isWrong = record.wrongDetails.some(w => w.q === i);
+        if (isWrong) {
+          matrixHtml += `<div class="bg-red-500 text-white py-1 rounded font-bold shadow-sm" title="ข้อ ${i}: ผิด">${i}</div>`;
+        } else {
+          matrixHtml += `<div class="bg-emerald-500 text-white py-1 rounded font-bold shadow-sm" title="ข้อ ${i}: ถูก">${i}</div>`;
+        }
+      }
+      matrixStrip.innerHTML = matrixHtml;
+
+      lucide.createIcons();
+      document.getElementById('result-modal').classList.remove('hidden');
+    }
+
+    function closeResultModal() {
+      document.getElementById('result-modal').classList.add('hidden');
+    }
+
+    function gradeNextStudent() {
+      closeResultModal();
+      // increment student ID and name for next student convenience
+      const curIdNum = parseInt(document.getElementById('student-id').value.replace(/\D/g, '')) || 670104;
+      document.getElementById('student-id').value = `STD-${curIdNum + 1}`;
+      document.getElementById('student-name').value = 'นักเรียนคนถัดไป';
+      document.getElementById('student-no').value = parseInt(document.getElementById('student-no').value || 1) + 1;
+      fillRandomStudentAnswers();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function viewInHistoryFromModal() {
+      closeResultModal();
+      navigateTo('history');
+    }
+
+    // ---------- HISTORY & STATS ENGINE (PAGE 4) ----------
+    function renderFullHistoryTable() {
+      const tbody = document.getElementById('history-full-tbody');
+      if (!tbody) return;
+
+      let html = '';
+      historyRecords.forEach((item, index) => {
+        const isSelected = selectedHistoryItem && selectedHistoryItem.id === item.id;
+        const passClass = item.passed ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50';
+        
+        html += `
+          <tr onclick="selectHistoryItem(${index})" class="hover:bg-blue-50/50 cursor-pointer transition ${isSelected ? 'bg-blue-50/70 font-medium' : ''}">
+            <td class="py-3 px-3 text-slate-500 whitespace-nowrap">${item.time}</td>
+            <td class="py-3 px-3 font-mono-code font-bold text-slate-900">${item.id}</td>
+            <td class="py-3 px-3 text-slate-800">
+              <div>${item.name}</div>
+              <div class="text-[11px] text-slate-400">ห้อง ${item.room} • เลขที่ ${item.no}</div>
+            </td>
+            <td class="py-3 px-3 text-slate-600">${item.subject}</td>
+            <td class="py-3 px-3 text-center font-mono-code font-bold ${item.passed ? 'text-blue-900' : 'text-red-600'}">
+              ${item.score} / ${item.total}
+            </td>
+            <td class="py-3 px-3 text-center font-mono-code">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold ${passClass}">
+                ${item.grade} (${item.passed ? 'ผ่าน' : 'ตก'})
+              </span>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <button onclick="event.stopPropagation(); selectHistoryItem(${index});" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline">
+                ดูผล
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      updateHistoryStats();
+      updateSelectedHistoryDetailCard();
+    }
+
+    function selectHistoryItem(index) {
+      selectedHistoryItem = historyRecords[index] || historyRecords[0];
+      renderFullHistoryTable();
+    }
+
+    function updateSelectedHistoryDetailCard() {
+      if (!selectedHistoryItem) return;
+      const item = selectedHistoryItem;
+
+      document.getElementById('detail-student-name').innerText = item.name;
+      document.getElementById('detail-student-meta').innerText = `${item.id} • ห้อง ${item.room} • เลขที่ ${item.no}`;
+      document.getElementById('detail-score-val').innerText = item.score;
+      document.getElementById('detail-total-val').innerText = item.total;
+      document.getElementById('detail-percent-val').innerText = `${item.percentage}%`;
+      document.getElementById('detail-grade-val').innerText = `เกรด ${item.grade}`;
+
+      const passBadge = document.getElementById('detail-pass-badge');
+      if (item.passed) {
+        passBadge.innerText = 'ผ่านเกณฑ์';
+        passBadge.className = 'text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-semibold';
+      } else {
+        passBadge.innerText = 'ไม่ผ่านเกณฑ์';
+        passBadge.className = 'text-[11px] bg-red-100 text-red-700 px-2 py-0.5 rounded font-semibold';
+      }
+
+      // Wrong list
+      const wrongListEl = document.getElementById('detail-wrong-items');
+      if (item.wrongDetails.length === 0) {
+        wrongListEl.innerHTML = '<div class="text-emerald-600 text-xs p-2 bg-emerald-50 rounded">✓ ถูกทุกข้อ 100%</div>';
+      } else {
+        let wHtml = '';
+        item.wrongDetails.slice(0, 5).forEach(w => {
+          wHtml += `
+            <div class="flex items-center justify-between p-1.5 rounded bg-slate-50 border border-slate-200">
+              <span>ข้อที่ ${w.q} (ตอบ: <span class="text-red-600 font-bold">${w.student}</span>)</span>
+              <span class="text-emerald-700 font-bold">เฉลย: ${w.correct}</span>
+            </div>
+          `;
+        });
+        if (item.wrongDetails.length > 5) {
+          wHtml += `<div class="text-[10px] text-slate-400 text-center">+ อีก ${item.wrongDetails.length - 5} ข้อ</div>`;
+        }
+        wrongListEl.innerHTML = wHtml;
+      }
+
+      // Matrix mini preview
+      const matrixEl = document.getElementById('detail-matrix-preview');
+      let mHtml = '';
+      for (let i = 1; i <= item.total; i++) {
+        const isWrong = item.wrongDetails.some(w => w.q === i);
+        mHtml += `<span class="py-0.5 rounded ${isWrong ? 'bg-red-500 text-white font-bold' : 'bg-emerald-500 text-white font-bold'}">${i}</span>`;
+      }
+      matrixEl.innerHTML = mHtml;
+    }
+
+    function updateHistoryStats() {
+      const totalCount = historyRecords.length;
+      let totalScore = 0;
+      let passCount = 0;
+
+      historyRecords.forEach(r => {
+        totalScore += r.score;
+        if (r.passed) passCount++;
+      });
+
+      const avg = totalCount > 0 ? (totalScore / totalCount).toFixed(1) : '0';
+      const failCount = totalCount - passCount;
+
+      document.getElementById('hist-stat-total').innerText = `${totalCount} ครั้ง`;
+      document.getElementById('hist-stat-avg').innerText = `${avg} / ${examConfig.totalQuestions}`;
+      document.getElementById('hist-stat-pass').innerText = `${passCount} คน`;
+      document.getElementById('hist-stat-fail').innerText = `${failCount} คน`;
+    }
+
+    function filterHistoryTable() {
+      const query = document.getElementById('history-search').value.toLowerCase();
+      const subjectFilter = document.getElementById('history-filter-subject').value;
+
+      const filtered = historyRecords.filter(r => {
+        const matchQuery = r.name.toLowerCase().includes(query) || r.id.toLowerCase().includes(query) || r.room.toLowerCase().includes(query);
+        let matchSubject = true;
+        if (subjectFilter === 'math') matchSubject = r.subject.includes('คณิต');
+        if (subjectFilter === 'physics') matchSubject = r.subject.includes('ฟิสิกส์');
+        return matchQuery && matchSubject;
+      });
+
+      const tbody = document.getElementById('history-full-tbody');
+      let html = '';
+      filtered.forEach((item, index) => {
+        const isSelected = selectedHistoryItem && selectedHistoryItem.id === item.id;
+        html += `
+          <tr onclick="selectHistoryItem(${index})" class="hover:bg-blue-50/50 cursor-pointer transition ${isSelected ? 'bg-blue-50/70' : ''}">
+            <td class="py-3 px-3 text-slate-500 whitespace-nowrap">${item.time}</td>
+            <td class="py-3 px-3 font-mono-code font-bold text-slate-900">${item.id}</td>
+            <td class="py-3 px-3 text-slate-800">
+              <div>${item.name}</div>
+              <div class="text-[11px] text-slate-400">ห้อง ${item.room} • เลขที่ ${item.no}</div>
+            </td>
+            <td class="py-3 px-3 text-slate-600">${item.subject}</td>
+            <td class="py-3 px-3 text-center font-mono-code font-bold ${item.passed ? 'text-blue-900' : 'text-red-600'}">
+              ${item.score} / ${item.total}
+            </td>
+            <td class="py-3 px-3 text-center font-mono-code">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold ${item.passed ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'}">
+                ${item.grade}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <button onclick="event.stopPropagation(); selectHistoryItem(${index});" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline">
+                ดูผล
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function exportHistoryCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,วันเวลา,รหัสนักเรียน,ชื่อสกุล,ห้อง,เลขที่,วิชา,คะแนนที่ได้,คะแนนเต็ม,ร้อยละ,เกรด,ผลการประเมิน\n";
+      historyRecords.forEach(r => {
+        csvContent += `"${r.time}","${r.id}","${r.name}","${r.room}","${r.no}","${r.subject}",${r.score},${r.total},${r.percentage},"${r.grade}","${r.passed ? 'ผ่าน' : 'ไม่ผ่าน'}"\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `examgrade_history_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ---------- HOME DASHBOARD SYNC ----------
+    function renderHomeDashboard() {
+      document.getElementById('home-card-keyname').innerText = examConfig.subject;
+      document.getElementById('home-card-keycount').innerText = `${examConfig.totalQuestions} ข้อ`;
+
+      // 5 sample keys preview
+      let sampleHtml = '';
+      for (let i = 1; i <= Math.min(5, examConfig.totalQuestions); i++) {
+        sampleHtml += `<span class="bg-white px-2 py-0.5 rounded border border-blue-200">${i}: ${examConfig.keys[i] || 'A'}</span>`;
+      }
+      document.getElementById('home-sample-keys').innerHTML = sampleHtml;
+
+      // Recent 3 history rows
+      const tbody = document.getElementById('home-history-tbody');
+      let hHtml = '';
+      historyRecords.slice(0, 3).forEach(r => {
+        hHtml += `
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="navigateTo('history')">
+            <td class="py-2 text-slate-800">
+              <div class="font-bold">${r.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono-code">${r.id} (${r.room})</div>
+            </td>
+            <td class="py-2 text-slate-500 text-[11px]">${r.subject}</td>
+            <td class="py-2 text-center font-mono-code font-bold ${r.passed ? 'text-blue-900' : 'text-red-600'}">${r.score}/${r.total}</td>
+            <td class="py-2 text-center font-mono-code text-slate-600">${r.percentage}%</td>
+            <td class="py-2 text-center font-mono-code">
+              <span class="px-1.5 py-0.5 rounded ${r.passed ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'} font-bold text-[10px]">${r.grade}</span>
+            </td>
+            <td class="py-2 text-right text-slate-400 text-[10px] whitespace-nowrap">${r.time.split(',')[1] || r.time}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = hHtml;
+    }
+
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('clock-display');
+      if (el) {
+        el.innerText = `เวลาปัจจุบัน: ${now.toLocaleTimeString('th-TH')}`;
+      }
+    }
+
+    // Window Init
+    window.addEventListener('DOMContentLoaded', () => {
+      initDefaultKeys();
+      renderAnswerKeyGrid();
+      renderStudentAnswerGrid();
+      renderHomeDashboard();
+      renderFullHistoryTable();
+      updateClock();
+      setInterval(updateClock, 1000);
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
